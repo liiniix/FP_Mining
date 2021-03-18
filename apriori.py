@@ -1,3 +1,5 @@
+from tqdm import tqdm
+
 class Apriori:
     def __init__(self, root):
         self.root = root
@@ -5,7 +7,13 @@ class Apriori:
     
     def read_data(self, data_path="kosarak.dat"):
         f = open(data_path,'r')
-        self.dat = [line.strip().split() for line in f]
+        #self.dat = [[chr(int(word))] for line in f for word in line.strip().split()]
+        self.dat = []
+        for line in f:
+            a = []
+            for word in line.strip().split():
+                a.append(chr(int(word)))
+            self.dat.append(a)
         #print(self.dat)
     
     
@@ -65,7 +73,7 @@ class Apriori:
 
 
 
-    def run(self, min_sup = 400):
+    def run(self, min_sup = 15000):
         self.min_sup = min_sup
         
         c1 = self.make_c1()
@@ -75,27 +83,29 @@ class Apriori:
         self.hash_pointer = dict()
         for key in l1.keys():
             self.add_l_in_tree(self.root, key, pos=0)
-        for line in self.dat:
+        for line in tqdm(self.dat):
             self.process_line(self.root,line,depth=1)
 #        self.hash_pointer = dict()
         l =l1
         for depth in range(1,100000000):
+            print("###########")
             c = self.join(l)
-            print("#", c.keys())
+            #print("#", c.keys())
             if len(c.keys())==0:
                 break
             for key in c.keys():
                 self.add_l_in_tree(self.root, key, pos = 0)
             #print('# : ', self.hash_pointer)
-            for line in self.dat:
+            for line in tqdm(self.dat):
                 self.process_line(self.root, line, depth)
             l = dict()
-            for key, value in self.hash_pointer.items():
-                #if len(key)<depth:
-                #    break
+            for key, value in reversed(self.hash_pointer.items()):
+                if len(key)<depth:
+                    break
                 if len(key) == depth and value.count >= self.min_sup:
                     l[key] = value.count
-            print("#",l.keys())
+            for i in l.keys():
+                print(depth, i, len(i))
             print(f"Candidate {len(c.keys())} Pruned {len(l.keys())}")
 class Node:
     def __init__(self, data):
